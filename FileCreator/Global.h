@@ -1,0 +1,35 @@
+#pragma once
+
+typedef struct trade_sys * trade_p;
+typedef struct trade_time * trade_tp;
+
+struct trade_sys
+{
+	int index;
+	float price_sum;
+	int trade_sum;
+};
+
+struct trade_time
+{
+	char st[6];
+	char et[6];
+};
+
+
+
+#define DPX_PATH "Z:\\data\\WindDB\\dpx\\"
+#define TRADE_PATH "Z:\\data\\WindDB\\production\\trade\\"
+#define POSITION_PATH "Z:\\data\\WindDB\\production\\position\\"
+#define OUT_ACCOUNT_PATH "Z:\\data\\WindDB\\production\\Citics_dailyDetails\\our_account\\"
+#define IPX_PATH "Z:\\data\\WindTerminal\\ipx\\"
+
+
+#define POS_SYS_PATH "trade\\System\\"
+#define TRADE_SYS_PATH "trade\\System\\"
+
+#define OUT_POSITION_PATH "out_position\\"
+#define OUT_TRADE_PATH "out_trade\\"
+#define OUT_POS_PATH "out_pos\\"
+#define OUT_TCOST_PATH "out_tcost\\"
+#define OUT_PNLPATH "out_pnl\\"
