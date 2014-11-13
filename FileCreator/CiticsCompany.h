@@ -32,6 +32,12 @@ private:
 	int totalshr0 = 0;
 	int totaltrade = 0;
 	float tpx_avg = 0;
+
+
+	void FillTrade();
+	void FillDpx(int type, vector<float> &dpx_q, float *totaldpx);
+	void FillPos(int type, vector<int> &ve, int *totalshr);
+	void FillPosV2(vector<int> &ve, int type);
 public:
 	char lastdate[30];//出文件昨天的日期
 	char fdate[8];//选择输出文件的日期.
@@ -56,10 +62,11 @@ public:
 	char* LocateColomn(int index);
 	int Time2Index(char *strtime);
 	int CheckVector();
-	void FillTrade();
-	void FillDpx(int type, vector<float> &dpx_q, float *totaldpx);
-	void FillPos(int type, vector<int> &ve, int *totalshr);
+
 	void GetTimeRange();
 	void Clearvector();
+	void CheckPos();
+	map<string, int> FillPosV2(int);
+
 };
 

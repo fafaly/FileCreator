@@ -65,6 +65,7 @@ public:
 	virtual void FillPos(int type, vector<int> &ve, int *totalshr) = 0;
 	virtual void GetTimeRange() = 0;
 	virtual void Clearvector() = 0;
+	virtual void CheckPos() = 0;
 
 };
 

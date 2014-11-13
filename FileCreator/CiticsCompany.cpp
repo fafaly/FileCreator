@@ -304,6 +304,7 @@ void CiticsCompany::FillTrade()
 	FILE *trade_fp;
 	char strline[100];
 	char tmpbuf[100];
+	tk_q.clear();
 	/*对trade文件的处理*/
 	sprintf(tmpbuf, "%s%s.trade.csv", TRADE_PATH, fdate);
 	trade_fp = fopen(tmpbuf, "r");//打开今天的trade.csv
@@ -352,7 +353,10 @@ void CiticsCompany::FillTrade()
 	fclose(trade_fp);
 }
 
-/*type:0是pos0,1为pos1*/
+/*
+* 以tk_q为单位进行，即总数目与tk_q一致
+* type:0是pos0,1为pos1
+*/
 void CiticsCompany::FillPos(int type, vector<int> &ve, int *totalshr)
 {
 	FILE *fp;
@@ -360,12 +364,17 @@ void CiticsCompany::FillPos(int type, vector<int> &ve, int *totalshr)
 	char strline[100];
 	char tmpbuf[100];
 	int *tshr;
-	/*对pos0文件的处理*/
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	if (type == 0)
+	{
+		shr0_q.clear();
 		sprintf(tmpbuf, "%s%s.pos.csv", POSITION_PATH, lastdate);
+	}
 	else
+	{
+		shr1_q.clear();
 		sprintf(tmpbuf, "%s%s.pos.csv", POSITION_PATH, fdate);
+	}
 	fp = fopen(tmpbuf, "r");
 	fgets(strline, 50, fp);//跳过表头
 	fgets(strline, 50, fp);//跳过CASH
@@ -400,7 +409,10 @@ void CiticsCompany::FillPos(int type, vector<int> &ve, int *totalshr)
 	fclose(fp);
 }
 
-/*type:0是dpx0,1为dpx1*/
+/*
+ * 以tk_q为单位进行，即总数目与tk_q一致
+ * type:0是dpx0,1为dpx1
+*/
 void CiticsCompany::FillDpx(int type, vector<float> &dpx_q, float *totaldpx)
 {
 	FILE *fp;
@@ -408,9 +420,15 @@ void CiticsCompany::FillDpx(int type, vector<float> &dpx_q, float *totaldpx)
 	char strline[100];
 	char tmpbuf[100];
 	if (type == 0)
+	{
+		dpx0_q.clear();
 		sprintf(tmpbuf, "%s%s.dpx.csv", DPX_PATH, lastdate);
+	}
 	else
+	{
+		dpx1_q.clear();
 		sprintf(tmpbuf, "%s%s.dpx.csv", DPX_PATH, fdate);
+	}
 	fp = fopen(tmpbuf, "r");
 	if (fp == NULL)
 	{
@@ -677,4 +695,59 @@ void CiticsCompany::GetTcost()
 	}
 	fclose(fp);
 	printf("%s.tcost.csv created successful!\n", fdate);
+}
+
+/*
+* 直接拿到当天/昨天的pos所有值
+* type = 0 昨天 = 1 今天
+*/
+map<string, int>  CiticsCompany::FillPosV2(int type)
+{
+	FILE *fp;
+	char strline[100];
+	char tmpbuf[100];
+	map<string, int> mp;
+	int *tshr;
+	memset(tmpbuf, 0, sizeof(tmpbuf));
+	if (type == 0)
+	{
+		
+		sprintf(tmpbuf, "%s%s.pos.csv", POSITION_PATH, lastdate);
+	}
+	else
+	{
+		sprintf(tmpbuf, "%s%s.pos.csv", POSITION_PATH, fdate);
+	}
+	fp = fopen(tmpbuf, "r");
+	fgets(strline, 50, fp);//跳过表头
+	fgets(strline, 50, fp);//跳过CASH
+	int i = 0;
+	while (1)
+	{
+		char *tk_tmp = new char[10];
+		if (fgets(strline, 50, fp) == NULL)
+		{
+			break;
+		}
+		strcpy(tk_tmp, strtok(strline, ","));
+		char *shr = strtok(strline, ",");
+		mp[tk_tmp] = atoi(shr);
+	}
+	fclose(fp);
+	return mp;
+}
+
+void CiticsCompany::CheckPos()
+{
+	FillTrade();
+	map<string,int> pos1 = FillPosV2(0);
+	map<string, int> pos1 = FillPosV2(1);
+	int count1 = shr0_q.size();
+	int count2 = shr1_q.size();
+	int i = 0;
+	while (i < count1 && i < count2)
+	{
+
+	}
+
 }
