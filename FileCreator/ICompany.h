@@ -8,6 +8,19 @@ using namespace std;
 
 class ICompany
 {
+private:
+	const char * DPX_PATH;
+	const char * TRADE_PATH;
+	const char * POSITION_PATH;
+	const char * OUT_ACCOUNT_PATH;
+	const char * IPX_PATH;
+	const char * POS_SYS_PATH;
+	const char * TRADE_SYS_PATH;
+	const char * OUT_POSITION_PATH;
+	const char * OUT_TRADE_PATH;
+	const char * OUT_POS_PATH;
+	const char * OUT_TCOST_PATH;
+	const char * OUT_PNLPATH;
 public:
 	char lastdate[30];//出文件昨天的日期
 	char fdate[8];//选择输出文件的日期.

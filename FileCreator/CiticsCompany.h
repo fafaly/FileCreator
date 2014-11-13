@@ -3,9 +3,20 @@
 
 class CiticsCompany:public ICompany
 {
-public:
-	char lastdate[30];//出文件昨天的日期
-	char fdate[8];//选择输出文件的日期.
+private:
+	const char * DPX_PATH = "Z:\\data\\WindDB\\dpx\\";
+	const char * TRADE_PATH = "Z:\\data\\WindDB\\production\\trade\\";
+	const char * POSITION_PATH = "Z:\\data\\WindDB\\production\\position\\";
+	const char *  OUT_ACCOUNT_PATH = "Z:\\data\\WindDB\\production\\Citics_dailyDetails\\our_account\\";
+	const char *  IPX_PATH = "Z:\\data\\WindTerminal\\ipx\\";
+	const char * POS_SYS_PATH = "trade\\System\\";
+	const char *  TRADE_SYS_PATH = "trade\\System\\";
+
+	const char *  OUT_POSITION_PATH = "out_position\\";
+	const char *  OUT_TRADE_PATH = "out_trade\\";
+	const char *  OUT_POS_PATH = "out_pos\\";
+	const char *  OUT_TCOST_PATH = "out_tcost\\";;
+	const char * OUT_PNLPATH = "out_pnl\\";
 
 	vector<char*> tk_q;//ticker
 	vector<float> tpx_q;//today trade price
@@ -21,6 +32,10 @@ public:
 	int totalshr0 = 0;
 	int totaltrade = 0;
 	float tpx_avg = 0;
+public:
+	char lastdate[30];//出文件昨天的日期
+	char fdate[8];//选择输出文件的日期.
+
 	CiticsCompany();
 	~CiticsCompany();
 	/*获取持仓数，将持仓为0的行去掉.（只需给定的两列)*/
