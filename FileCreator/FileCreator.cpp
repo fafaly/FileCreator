@@ -12,16 +12,17 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	IFactory *factory = new CiticsFactory();
 	ICompany *comp = factory->CreatCompany();
-	strcpy(comp->fdate, "20141107");
+	strcpy(comp->fdate, "20140926");
 	while (strcmp(comp->fdate, "20140925") != 0)
 	{
 		comp->GetDate(comp->fdate);
 		comp->GetLastDate();
-		//GetTrade();
-		//GetPos();
-		comp->GetPNL();
-		comp->GetAccount();
+		//comp->GetTrade();
+		//comp->GetPos();
+		//comp->GetPNL();
+		//comp->GetAccount();
 		//comp->GetTcost();
+		comp->CheckPos();
 		comp->GetLastDate();
 		strcpy(comp->fdate, comp->lastdate);
 		comp->Clearvector();

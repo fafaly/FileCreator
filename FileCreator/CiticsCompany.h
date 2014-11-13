@@ -5,17 +5,19 @@ class CiticsCompany:public ICompany
 {
 private:
 	const char * DPX_PATH = "Z:\\data\\WindDB\\dpx\\";
-	const char * TRADE_PATH = "Z:\\data\\WindDB\\production\\trade\\";
-	const char * POSITION_PATH = "Z:\\data\\WindDB\\production\\position\\";
-	const char *  OUT_ACCOUNT_PATH = "Z:\\data\\WindDB\\production\\Citics_dailyDetails\\our_account\\";
-	const char *  IPX_PATH = "Z:\\data\\WindTerminal\\ipx\\";
+	//const char * TRADE_PATH = "Z:\\data\\WindDB\\production\\trade\\";
+	//const char * POSITION_PATH = "Z:\\data\\WindDB\\production\\position\\";
+	const char * TRADE_PATH = "trade\\";
+	const char * POSITION_PATH = "position\\";
+	const char * IPX_PATH = "Z:\\data\\WindTerminal\\ipx\\";
 	const char * POS_SYS_PATH = "trade\\System\\";
-	const char *  TRADE_SYS_PATH = "trade\\System\\";
+	const char * TRADE_SYS_PATH = "trade\\System\\";
 
-	const char *  OUT_POSITION_PATH = "out_position\\";
-	const char *  OUT_TRADE_PATH = "out_trade\\";
-	const char *  OUT_POS_PATH = "out_pos\\";
-	const char *  OUT_TCOST_PATH = "out_tcost\\";;
+	const char * OUT_ACCOUNT_PATH = "Z:\\data\\WindDB\\production\\Citics_dailyDetails\\our_account\\";
+	const char * OUT_POSITION_PATH = "out_position\\";
+	const char * OUT_TRADE_PATH = "out_trade\\";
+	const char * OUT_POS_PATH = "out_pos\\";
+	const char * OUT_TCOST_PATH = "out_tcost\\";;
 	const char * OUT_PNLPATH = "out_pnl\\";
 
 	vector<char*> tk_q;//ticker
@@ -37,7 +39,8 @@ private:
 	void FillTrade();
 	void FillDpx(int type, vector<float> &dpx_q, float *totaldpx);
 	void FillPos(int type, vector<int> &ve, int *totalshr);
-	void FillPosV2(vector<int> &ve, int type);
+	map<string,int> FillPosV2(vector<int> &ve, int type);
+	map<string, int> FillTradeShr();
 public:
 	char lastdate[30];//出文件昨天的日期
 	char fdate[8];//选择输出文件的日期.

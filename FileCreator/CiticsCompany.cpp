@@ -711,7 +711,6 @@ map<string, int>  CiticsCompany::FillPosV2(int type)
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	if (type == 0)
 	{
-		
 		sprintf(tmpbuf, "%s%s.pos.csv", POSITION_PATH, lastdate);
 	}
 	else
@@ -727,10 +726,43 @@ map<string, int>  CiticsCompany::FillPosV2(int type)
 		char *tk_tmp = new char[10];
 		if (fgets(strline, 50, fp) == NULL)
 		{
+			delete tk_tmp;
 			break;
 		}
 		strcpy(tk_tmp, strtok(strline, ","));
-		char *shr = strtok(strline, ",");
+		char *shr = strtok(NULL, ",");
+		mp[tk_tmp] = atoi(shr);
+	}
+	fclose(fp);
+	return mp;
+}
+
+/*
+* 从trade.csv中获取
+* 拿到当天tk及对应的shr
+*/
+map<string, int>  CiticsCompany::FillTradeShr()
+{
+	FILE *fp;
+	char strline[100];
+	char tmpbuf[100];
+	map<string, int> mp;
+	int *tshr;
+	memset(tmpbuf, 0, sizeof(tmpbuf));
+	sprintf(tmpbuf, "%s%s.trade.csv", TRADE_PATH, fdate);
+	fp = fopen(tmpbuf, "r");
+	fgets(strline, 50, fp);//跳过表头
+	int i = 0;
+	while (1)
+	{
+		char *tk_tmp = new char[10];
+		if (fgets(strline, 50, fp) == NULL)
+		{
+			delete tk_tmp;
+			break;
+		}
+		strcpy(tk_tmp, strtok(strline, ","));
+		char *shr = strtok(NULL, ",");
 		mp[tk_tmp] = atoi(shr);
 	}
 	fclose(fp);
@@ -739,15 +771,50 @@ map<string, int>  CiticsCompany::FillPosV2(int type)
 
 void CiticsCompany::CheckPos()
 {
-	FillTrade();
+	map<string, int> trdshr = FillTradeShr();
 	map<string,int> pos1 = FillPosV2(0);
-	map<string, int> pos1 = FillPosV2(1);
-	int count1 = shr0_q.size();
-	int count2 = shr1_q.size();
+	map<string, int> pos2 = FillPosV2(1);
+	map<string , int> posnew;
 	int i = 0;
-	while (i < count1 && i < count2)
+	map<string, int>::iterator it;
+	/*得带了trade文件与pos文件的并集并且去掉0持仓的项*/
+	for (it = trdshr.begin(); it != trdshr.end(); it++)
 	{
-
+		if (pos1[it->first]+ it->second == 0)
+		{
+			map<string, int>::iterator itmp = pos1.find(it->first);
+			pos1.erase(itmp);
+		}
+		else
+		{
+			pos1[it->first] += it->second;
+			
+		}
 	}
-
+	/*比较计算出来的pos和真实pos*/
+	if (pos1.size() != pos2.size())
+	{
+		printf("[Warning]Size: Pos1 = %d ,Pos2 = %d.Please Check\n",pos1.size(),pos2.size());
+	}
+	else
+	{
+		printf("[INFO]The size of both pos is the same.\n");
+	}
+	int ret = 0;
+	for (it = pos1.begin(); it != pos1.end(); it++)
+	{
+		if (pos2[it->first] != it->second)
+		{
+			printf("[WARNING]%s:pos1=%d,pos2=%d\n",it->first,it->second,pos2[it->first]);
+			ret = 1;
+		}
+	}
+	if (ret == 0)
+	{
+		printf("[INFO]All the pos.csv data is correct.\n");
+	}
+	else
+	{
+		printf("Please check it\n");
+	}
 }
