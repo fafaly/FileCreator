@@ -3,7 +3,7 @@
 class IFactory
 {
 public:
-	virtual ICompany *CreatCompany() = 0;
+	virtual ICompany *CreatCompany(int) = 0;
 
 };
 

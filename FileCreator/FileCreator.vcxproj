@@ -84,6 +84,7 @@
   <ItemGroup>
     <ClInclude Include="CiticsCompany.h" />
     <ClInclude Include="CiticsFactory.h" />
+    <ClInclude Include="DataLog.h" />
     <ClInclude Include="FileCreator.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="ICompany.h" />
@@ -95,6 +96,7 @@
   <ItemGroup>
     <ClCompile Include="CiticsCompany.cpp" />
     <ClCompile Include="CiticsFactory.cpp" />
+    <ClCompile Include="DataLog.cpp" />
     <ClCompile Include="FileCreator.cpp" />
     <ClCompile Include="ICompany.cpp" />
     <ClCompile Include="stdafx.cpp">

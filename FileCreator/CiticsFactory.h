@@ -5,9 +5,9 @@
 class CiticsFactory : public IFactory
 {
 public:
-	virtual ICompany *CreatCompany()
+	virtual ICompany *CreatCompany(int pro_no)
 	{
-		return new CiticsCompany();
+		return new CiticsCompany(pro_no);
 	}
 
 	CiticsFactory::CiticsFactory();

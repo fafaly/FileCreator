@@ -45,6 +45,9 @@
     <ClInclude Include="Global.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DataLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -60,6 +63,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ICompany.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DataLog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
