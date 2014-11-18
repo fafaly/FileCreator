@@ -87,6 +87,7 @@
     <ClInclude Include="DataLog.h" />
     <ClInclude Include="FileCreator.h" />
     <ClInclude Include="Global.h" />
+    <ClInclude Include="GlobalFunc.h" />
     <ClInclude Include="ICompany.h" />
     <ClInclude Include="IFactory.h" />
     <ClInclude Include="stdafx.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="CiticsFactory.cpp" />
     <ClCompile Include="DataLog.cpp" />
     <ClCompile Include="FileCreator.cpp" />
+    <ClCompile Include="GlobalFunc.cpp" />
     <ClCompile Include="ICompany.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

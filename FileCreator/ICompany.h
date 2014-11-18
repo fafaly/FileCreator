@@ -14,6 +14,7 @@ private:
 	vector<int> trade_shr;//today
 	vector<float> commission;
 	vector<float> stamptax;
+	vector<float> transfer;
 	map<string, trade_tp> tt_map;//记录交易股票的起始时间
 	vector<float> dpx0_q, dpx1_q;
 	vector<int> shr0_q, shr1_q;
@@ -22,9 +23,8 @@ private:
 	int totalshr1 = 0;
 	int totalshr0 = 0;
 	int totaltrade = 0;
+	float totaltrans = 0;
 	float tpx_avg = 0;
-
-
 
 	void FillTrade();
 	void FillDpx(int type, vector<float> &dpx_q, float *totaldpx);
@@ -38,7 +38,7 @@ public:
 	int log_no;
 
 	char lastdate[30];//出文件昨天的日期
-	char fdate[8];//选择输出文件的日期.
+	char fdate[10];//选择输出文件的日期.
 
 	char DPX_PATH[100];
 	char TRADE_PATH[100];
