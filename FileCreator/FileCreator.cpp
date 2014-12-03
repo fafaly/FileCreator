@@ -8,23 +8,59 @@
 #include "IFactory.h"
 #include "CiticsFactory.h"
 #include <string.h>
+#include <time.h>
+
+/*Check weekend and time */
+int CheckTime()
+{
+	time_t rawtime;
+	struct tm * timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	if (timeinfo->tm_wday == 0 || timeinfo->tm_wday == 6)
+	{
+		return false;
+	}
+	else if (timeinfo->tm_hour < 8)
+	{
+		return 2;//run the tcost
+	}
+	else
+	{
+		return 1;//run normal program
+	}
+}
 
 void Run(ICompany *comp)
 {
-	while (strcmp(comp->fdate, "xxxx") != 0)
+	int type = CheckTime() ;
+	if (type==1)
+	{
+		printf("Start run ...\n");
+		while (strcmp(comp->fdate, "xxxx") != 0)
+		{
+			comp->GetDate(comp->fdate);
+			comp->GetLastDate();
+			comp->GetTrade();
+			comp->GetPos();
+			comp->CheckPos();
+			comp->GetPNL();
+			comp->GetLastDate();
+			strcpy(comp->fdate, comp->lastdate);
+			comp->Clearvector();
+			break;
+		}
+	}
+	else if (type == 2)
 	{
 		comp->GetDate(comp->fdate);
 		comp->GetLastDate();
-		comp->GetTrade();
-		comp->GetPos();
-		comp->CheckPos();
-		comp->GetPNL();
 		comp->GetAccount();
 		comp->GetTcost();
-		comp->GetLastDate();
-		strcpy(comp->fdate, comp->lastdate);
-		comp->Clearvector();
-		break;
+	}
+	else
+	{
+		exit(1);
 	}
 }
 
@@ -32,11 +68,11 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	IFactory *factory = new CiticsFactory();
 	ICompany *comp = factory->CreatCompany(1);
-	//strcpy(comp->fdate, "20141114");
+	//strcpy(comp->fdate, "20141202");
 	Run(comp);
-	//comp = factory->CreatCompany(2);
-	//strcpy(comp->fdate, "20141111");
-	//Run(comp);
+	comp = factory->CreatCompany(2);
+	//strcpy(comp->fdate, "20141119");
+	Run(comp);
 	printf("Executed successfully!\n");
 	return 0;
 }

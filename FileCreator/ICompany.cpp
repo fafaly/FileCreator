@@ -140,9 +140,10 @@ void ICompany::GetPos()
 void ICompany::GetTrade()
 {
 	char tmpbuf[100];
+	char retfile[100];
 	/*打开文件并读取对应行*/
 	sprintf(tmpbuf, "%s%s.TradingSystem.csv", TRADE_SYS_PATH, fdate);
-	FILE *fp = F_OPEN(tmpbuf, "r",log_no,fdate);
+	FILE *fp = F_OPEN(tmpbuf, "r", log_no, fdate);
 	map <string, trade_p>::iterator m_Iter;
 	map<string, trade_p> t_map;
 	memset(tmpbuf, 0, sizeof(tmpbuf));
@@ -155,37 +156,42 @@ void ICompany::GetTrade()
 		char *cur_tk = new char[10];
 		strcpy(cur_tk, strtok(tmpbuf, ","));//当前证券代码
 		//如果不是股票和基金则忽略
-		if (cur_tk[0] != '0' && cur_tk[0] != '3' && cur_tk[0] != '6' || cur_tk[1] != '0')
+		if (cur_tk[0] != '0' && cur_tk[0] != '3' && cur_tk[0] != '6' )
+			continue;
+		if (cur_tk[0] == '0' && cur_tk[1] != '0')
 			continue;
 		trade_p ts = (trade_p)malloc(sizeof(struct trade_sys));
-		ts->trade_sum = atoi(strtok(NULL, ","));
-		ts->price_sum = atof(strtok(NULL, ","));
+		ts->shr = atoi(strtok(NULL, ","));
+		ts->price = atof(strtok(NULL, ","));
 		m_Iter = t_map.find(cur_tk);
-		ts->index = 0;
 		if (m_Iter == t_map.end())
 		{
-			ts->index++;
 			t_map[cur_tk] = ts;
+			t_map[cur_tk]->shr = ts->shr;
+			t_map[cur_tk]->price = ts->shr*ts->price;
 		}
 		else
 		{
-			m_Iter->second->index++;
-			m_Iter->second->price_sum += ts->price_sum;
-			m_Iter->second->trade_sum += ts->trade_sum;
+			m_Iter->second->price += ts->price*ts->shr;
+			m_Iter->second->shr += ts->shr;
 			free(ts);
 		}
 	}
 	fclose(fp);
 	//写入新文件.
 	memset(tmpbuf, 0, sizeof(tmpbuf));
-	sprintf(tmpbuf, "%s%s.trade.csv", OUT_TRADE_PATH, fdate);
-	FILE *tfp = F_OPEN(tmpbuf, "w", log_no, fdate);
+	sprintf(retfile, "%s%s.trade.csv", OUT_TRADE_PATH, fdate);
+	FILE *tfp = F_OPEN(retfile, "w", log_no, fdate);
 	fprintf(tfp, "#ticker,shr,tpx\n");
 	for (m_Iter = t_map.begin(); m_Iter != t_map.end(); m_Iter++)
 	{
-		fprintf(tfp, "%s,%d,%f\n", m_Iter->first.c_str(), m_Iter->second->trade_sum, m_Iter->second->price_sum / m_Iter->second->index);
+		fprintf(tfp, "%s,%d,%f\n", m_Iter->first.c_str(), m_Iter->second->shr, m_Iter->second->price / m_Iter->second->shr);
 	}
 	fclose(tfp);
+	char strtmp[100];
+	sprintf(strtmp, "%s created successful!", retfile);
+	DataLog dl(0, log_no, fdate, 1);
+	dl.WriteLog(strtmp);
 }
 
 /*
@@ -242,15 +248,21 @@ void ICompany::GetCash(FILE *fp)
 		/*commission和stamptax的处理*/
 		float cur_com = tpx * abs(shr) * 2.5 / 10000;//万分之2.5的佣金
 		float cur_stax = 0;
+		float cur_trans = 0;
 		if (shr < 0)//卖的话要交
 			cur_stax = -(shr * tpx / 1000);//万分之十
+		if (t_str[6] == '6')
+		{
+			cur_trans = abs(shr) * 6 / 10000;//股数的万分之6
+		}
 		total_com += cur_com;
 		total_stamptax += cur_stax;
+		total_transfer += cur_trans;
 		cash += -(shr * tpx);
 		i++;
 	}
 	tpx_avg = total_tpx / i;//取得平均值，pnl要用到
-	cash += atof(lastcash_str) - total_com - total_stamptax;
+	cash += atof(lastcash_str) - total_com - total_stamptax - total_transfer;
 	fclose(trade_fp);
 	fprintf(fp, "CASH,%f\n", cash);
 }
@@ -334,7 +346,7 @@ void ICompany::FillTrade()
 			cur_stax = -(shr * tpx / 1000);//万分之十
 		if (t_str[0] == '6')
 		{
-			cur_trans = -(shr * tpx * 6 / 1000);//千分之六
+			cur_trans = abs(shr) * 6 / 10000;//股数的万分之六
 		}
 		commission.push_back(cur_com);
 		stamptax.push_back(cur_stax);
@@ -788,13 +800,14 @@ void ICompany::CheckPos()
 	{
 		DataLog dl(1, log_no, fdate, 2);
 		memset(logstr,0,strlen(logstr));
-		sprintf(logstr,"Size: Pos1 = %d, Pos2 = %d.Please Check", pos1.size(), pos2.size());
+		sprintf(logstr,"Size: pos-1 + trade0 = %d, pos0 = %d.Please Check", pos1.size(), pos2.size());
 		dl.WriteLog(logstr);
+		exit(1);
 	}
 	else
 	{
 		DataLog dl(1, log_no, fdate, 1);
-		dl.WriteLog("The size of pos1 and pos2 is the same.");
+		dl.WriteLog("The stock number of (pos-1+trade0) and pos0 is the same.");
 	}
 	int ret = 0;
 	for (it = pos1.begin(); it != pos1.end(); it++)
@@ -803,7 +816,7 @@ void ICompany::CheckPos()
 		{
 			DataLog dl(1, log_no, fdate, 2);
 			memset(logstr, 0, strlen(logstr));
-			sprintf(logstr," %s:pos1 = %d, pos2 = %d", it->first, it->second, pos2[it->first]);
+			sprintf(logstr," %s:pos-1+trade0 = %d, pos0 = %d", it->first, it->second, pos2[it->first]);
 			dl.WriteLog(logstr);
 			ret = 1;
 		}

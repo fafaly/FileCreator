@@ -12,18 +12,17 @@
 typedef struct trade_sys * trade_p;
 typedef struct trade_time * trade_tp;
 
-struct trade_sys
-{
-	int index;
-	float price_sum;
-	int trade_sum;
-};
-
-struct trade_time
-{
-	char st[6];
-	char et[6];
-};
+//struct trade_sys
+//{
+//	float price;
+//	int shr;
+//};
+//
+//struct trade_time
+//{
+//	char st[6];
+//	char et[6];
+//};
 
 //void GetDate(char *date);
 
@@ -41,7 +40,7 @@ char fdate[8];//选择输出文件的日期.
 #define TRADE_SYS_PATH "trade\\System\\"
 
 #define OUT_POSITION_PATH "out_position\\"
-#define OUT_TRADE_PATH "out_trade\\"
-#define OUT_POS_PATH "out_pos\\"
-#define OUT_TCOST_PATH "out_tcost\\"
-#define OUT_PNLPATH "out_pnl\\"
+#define OUT_TRADE_PATH "Z:\\data\\WindDB\\production\\trade\\auto\\"
+#define OUT_POS_PATH "Z:\\data\\WindDB\\production\\postion\\auto\\"
+#define OUT_TCOST_PATH "Z:\\data\\WindDB\\production\\tcost\\auto\\"
+#define OUT_PNLPATH "Z:\\data\\WindDB\\production\\pnl\\auto\\\\"

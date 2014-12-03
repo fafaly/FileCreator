@@ -5,9 +5,8 @@ typedef struct trade_time * trade_tp;
 
 struct trade_sys
 {
-	int index;
-	float price_sum;
-	int trade_sum;
+	float price;
+	int shr;
 };
 
 struct trade_time

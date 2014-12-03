@@ -20,6 +20,7 @@ private:
 	vector<int> shr0_q, shr1_q;
 	float total_com = 0;
 	float total_stamptax = 0;
+	float total_transfer = 0;
 	int totalshr1 = 0;
 	int totalshr0 = 0;
 	int totaltrade = 0;
