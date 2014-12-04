@@ -73,6 +73,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//strcpy(comp->fdate, "20141119");
 	Run(comp);
 	printf("Executed successfully!\n");
+	_gettch();
 	return 0;
 }
 
