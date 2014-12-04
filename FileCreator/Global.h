@@ -11,8 +11,23 @@ struct trade_sys
 
 struct trade_time
 {
-	char st[6];
-	char et[6];
+	char st[10];
+	char et[10];
+};
+
+struct pnlst
+{
+	int pos_1;
+	int pos0;
+	int trade;
+	float px0;
+	float px_1;
+	float tpx;
+	float hold_pnl;
+	float trade_pnl;
+	float commission;
+	float stamp;
+	float transfer;
 };
 
 

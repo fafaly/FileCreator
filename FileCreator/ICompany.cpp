@@ -10,25 +10,7 @@ using namespace GlobalFunc;
 ICompany::ICompany(){};
 ICompany::~ICompany(){};
 
-void ICompany::Clearvector()
-{
-	tk_q.clear();
-	tpx_q.clear();//today trade price
-	trade_shr.clear();//today
-	commission.clear();
-	stamptax.clear();
-	tt_map.clear();//记录交易股票的起始时间
-	dpx0_q.clear();
-	dpx1_q.clear();
-	shr0_q.clear();
-	shr1_q.clear();
-	total_com = 0;
-	total_stamptax = 0;
-	totalshr0 = 0;
-	totalshr1 = 0;
-	totaltrade = 0;
-	tpx_avg = 0;
-}
+
 
 //从0开始计数,执行此函数前必须使用一次strtok
 char* ICompany::LocateColomn(int index)
@@ -267,58 +249,19 @@ void ICompany::GetCash(FILE *fp)
 	fprintf(fp, "CASH,%f\n", cash);
 }
 
-int ICompany::CheckVector()
-{
-	int ret = 0;
-	DataLog dl(0, log_no, fdate, 2);
-	if (tpx_q.size() != tk_q.size())
-	{
-		dl.WriteLog("tpx_q's size is incorrect,plesase check!");
-		ret = -1;
-	}
-	if (dpx0_q.size() != tk_q.size())
-	{
-		dl.WriteLog("dpx0_q's size is incorrect");
-		ret = -1;
-	}
-	if (dpx1_q.size() != tk_q.size())
-	{
-		dl.WriteLog("dpx_q's size is incorrect");
-		ret = -1;
-	}
-	if (trade_shr.size() != tk_q.size())
-	{
-		dl.WriteLog("trade_shr's size is incorrect");
-		ret = -1;
-	}
-	if (commission.size() != tk_q.size())
-	{
-		dl.WriteLog("commission's size is incorrect");
-		ret = -1;
-	}
-	if (stamptax.size() != tk_q.size())
-	{
-		dl.WriteLog("stamptax's size is incorrect");
-		ret = -1;
-	}
-	return ret;
-}
 
-void ICompany::FillTrade()
+
+void ICompany::FillTrade(map<string, pnlst> *pnlmp)
 {
 	FILE *trade_fp;
 	char strline[100];
 	char tmpbuf[100];
-	tk_q.clear();
 	/*对trade文件的处理*/
 	sprintf(tmpbuf, "%s%s.trade.csv", OUT_TRADE_PATH, fdate);
 	trade_fp = F_OPEN(tmpbuf, "r", log_no, fdate);//打开今天的trade.csv
 	fgets(strline, 50, trade_fp);//跳过表头
 	int i = 0;
 	float total_tpx = 0;
-	tk_q.clear();
-	commission.clear();
-	stamptax.clear();
 	total_com = 0;
 	total_stamptax = 0;
 	while (1)
@@ -327,17 +270,14 @@ void ICompany::FillTrade()
 			break;
 		char *t_str = new char[20];
 		strcpy(t_str, strtok(strline, ","));
-		tk_q.push_back(t_str);
 		char *shr_str = new char[20];
 		strcpy(shr_str, strtok(NULL, ","));
 		char *tpx_str = new char[10];
 		strcpy(tpx_str, strtok(NULL, ","));
 		float tpx = atof(tpx_str);
-		tpx_q.push_back(tpx);
 		int shr = atoi(shr_str);
 		total_tpx += tpx;
 		totaltrade += shr;
-		trade_shr.push_back(shr);
 		/*税费的处理*/
 		float cur_com = tpx * abs(shr) * 2.5 / 10000;//万分之2.5的佣金
 		float cur_stax = 0;
@@ -348,9 +288,10 @@ void ICompany::FillTrade()
 		{
 			cur_trans = abs(shr) * 6 / 10000;//股数的万分之六
 		}
-		commission.push_back(cur_com);
-		stamptax.push_back(cur_stax);
-		transfer.push_back(cur_trans);
+		(*pnlmp)[t_str].tpx = atof(tpx_str);
+		(*pnlmp)[t_str].commission = cur_com;
+		(*pnlmp)[t_str].stamp = cur_stax;
+		(*pnlmp)[t_str].transfer = cur_trans;
 		total_com += cur_com;
 		total_stamptax += cur_stax;
 		totaltrans += cur_trans;
@@ -361,57 +302,41 @@ void ICompany::FillTrade()
 }
 
 /*
-* 以tk_q为单位进行，即总数目与tk_q一致
+* 
 * type:0是pos0,1为pos1
 */
-void ICompany::FillPos(int type, vector<int> &ve, int *totalshr)
+void ICompany::FillPos(int type, map<string, pnlst> *pnlmp, int *totalshr)
 {
 	FILE *fp;
-	int size = tk_q.size();
 	char strline[100];
 	char tmpbuf[100];
 	int *tshr;
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	if (type == 0)
 	{
-		shr0_q.clear();
 		sprintf(tmpbuf, "%s%s.pos.csv", OUT_POSITION_PATH, lastdate);
 	}
 	else
 	{
-		shr1_q.clear();
 		sprintf(tmpbuf, "%s%s.pos.csv", OUT_POSITION_PATH, fdate);
 	}
 	fp = F_OPEN(tmpbuf, "r", log_no, fdate);
 	fgets(strline, 50, fp);//跳过表头
 	fgets(strline, 50, fp);//跳过CASH
-	int i = 0;
-	while (i < size)
+	while (1)
 	{
-		char *tk_tmp = new char[20];
+		char *t_str = new char[20];
 		if (fgets(strline, 50, fp) == NULL)
 		{
-			while (i < size)
-			{
-				ve.push_back(0);
-				i++;
-			}
 			break;
 		}
-		strcpy(tk_tmp, strtok(strline, ","));
-		char *b = new char[20];
+		strcpy(t_str, strtok(strline, ","));
+		char b[20];
 		strcpy(b, strtok(NULL, ","));
-		while (i<size && (atoi(tk_q[i]) < atoi(tk_tmp)))
-		{
-			ve.push_back(0);
-			i++;
-		}
-		if (i<size && (atoi(tk_q[i]) == atoi(tk_tmp)))
-		{
-			*totalshr += atoi(b);
-			ve.push_back(atoi(b));
-			i++;
-		}
+		if (type == 0)
+			(*pnlmp)[t_str].pos_1 = atoi(b);
+		else
+			(*pnlmp)[t_str].pos0 = atoi(b);
 	}
 	fclose(fp);
 }
@@ -420,41 +345,54 @@ void ICompany::FillPos(int type, vector<int> &ve, int *totalshr)
 * 以tk_q为单位进行，即总数目与tk_q一致
 * type:0是dpx0,1为dpx1
 */
-void ICompany::FillDpx(int type, vector<float> &dpx_q, float *totaldpx)
+void ICompany::FillDpx(int type, map<string, pnlst> *pnlmp, float *totaldpx)
 {
 	FILE *fp;
-	int size = tk_q.size();
 	char strline[100];
 	char tmpbuf[100];
 	if (type == 0)
 	{
-		dpx0_q.clear();
 		sprintf(tmpbuf, "%s%s.dpx.csv", DPX_PATH, lastdate);
 	}
 	else
 	{
-		dpx1_q.clear();
 		sprintf(tmpbuf, "%s%s.dpx.csv", DPX_PATH, fdate);
 	}
 	fp = F_OPEN(tmpbuf, "r", log_no, fdate);
 	fgets(strline, 100, fp);//跳过表头
 	float dpx0_avg = 0;
 	int i = 0;
-	while (i < size)
+	map<string, pnlst>::iterator it;
+	for (it = (*pnlmp).begin(); it != (*pnlmp).end(); it++)
 	{
-		if (fgets(strline, 100, fp) == NULL)
-			break;
-		char *tmp1 = new char[20];
-		strcpy(tmp1, strtok(strline, ","));
-		int bs = strncmp(tmp1, tk_q[i], 6);
-		//如果不是交易的股票则下一个
-		if (bs == 0)
+		while(1)
 		{
-			strcpy(tmp1, LocateColomn(6));
-			dpx_q.push_back(atof(tmp1));
-			*totaldpx += atof(tmp1);
-			i++;
+			if (fgets(strline, 100, fp) == NULL)
+				break;
+			char tk[10];
+			strcpy(tk, strtok(strline, ","));
+			if (strcmp(it->first.c_str(), tk) != 0)
+			{
+				continue;
+			}
+			else
+			{
+				char px[20];
+				strcpy(px, LocateColomn(6));
+				float dpxtmp = atof(px);
+				if (type == 0)
+				{
+					it->second.px_1 = dpxtmp;
+				}
+				else
+				{
+					it->second.px0 = dpxtmp;
+				}
+				*totaldpx += dpxtmp;
+				break;
+			}
 		}
+		
 	}
 	fclose(fp);
 }
@@ -465,42 +403,49 @@ void ICompany::GetPNL()
 	char strline[100];
 	char tmpbuf[100];
 	float totaldpx1, totaldpx0;
-	FillTrade();
-	FillPos(0, shr0_q, &totalshr0);
-	FillPos(1, shr1_q, &totalshr1);
-	FillDpx(0, dpx0_q, &totaldpx0);
-	FillDpx(1, dpx1_q, &totaldpx1);
-	int size = tk_q.size();
+
+	map<string, pnlst> pnlmp;
+	FillTrade(&pnlmp);
+	FillPos(0, &pnlmp, &totalshr0);
+	FillPos(1, &pnlmp, &totalshr1);
+	FillDpx(0, &pnlmp, &totaldpx0);
+	FillDpx(1, &pnlmp, &totaldpx1);
+	int size = pnlmp.size();
 	float dpx0_avg = totaldpx0 / size;
 	float dpx1_avg = totaldpx1 / size;
-	if (CheckVector() == -1)
-	{
-		exit(1);
-	}
 	/*计算hold_pnl,trade_pnl*/
 	vector<float> holdpnl_q;
 	vector<float> tradpnl_q;
 	float total_hpnl = 0;
 	float total_tpnl = 0;
 	int i = 0;
-	for (i = 0; i < size; i++)
+	map<string, pnlst>::iterator it;
+	for (it = pnlmp.begin(); it != pnlmp.end(); it++)
 	{
-		float cur_hpnl = shr0_q[i] * (dpx1_q[i] - dpx0_q[i]);
-		holdpnl_q.push_back(cur_hpnl);
+		float shr0 = it->second.pos_1;
+		float shr1 = it->second.pos0;
+		float dpx1 = it->second.px0;
+		float dpx0 = it->second.px_1;
+		float tpx = it->second.tpx;
+		float cur_hpnl = shr0 * (dpx1 - dpx0);
+		it->second.hold_pnl = cur_hpnl;
 		total_hpnl += cur_hpnl;
-		float cur_tpnl = (shr1_q[i] - shr0_q[i]) * (dpx1_q[i] - tpx_q[i]);
-		tradpnl_q.push_back(cur_tpnl);
+		float cur_tpnl = (shr1 - shr0) * (dpx1 - tpx);
+		it->second.trade_pnl = cur_tpnl;
 		total_tpnl += cur_tpnl;
 	}
+
 	/*写入新的pnl文件*/
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	sprintf(tmpbuf, "%s%s.pnl.csv", OUT_PNLPATH, fdate);
 	fp = F_OPEN(tmpbuf, "w", log_no, fdate); // 新建pnl文件
 	fprintf(fp, "#tk,pos-1,pos0,trade,px-1,px0,tpx,hold_pnl,trade_pnl,commission,stamp_tax,transfer_tax\n");
 	fprintf(fp, "#total,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f\n", totalshr0, totalshr1, totaltrade, dpx0_avg, dpx1_avg, tpx_avg, total_hpnl, total_tpnl, total_com, total_stamptax, totaltrans);
-	for (i = 0; i < size; i++)
+	for (it = pnlmp.begin(); it != pnlmp.end(); it++)
 	{
-		fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f\n", tk_q[i], shr0_q[i], shr1_q[i], trade_shr[i], dpx0_q[i], dpx1_q[i], tpx_q[i], holdpnl_q[i], tradpnl_q[i], commission[i], stamptax[i],transfer[i]);
+		fprintf(fp, "%s,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f\n",
+			it->first, it->second.pos_1, it->second.pos0, it->second.trade, it->second.px_1, it->second.px0, it->second.tpx, it->second.hold_pnl, it->second.trade_pnl, 
+			it->second.commission, it->second.stamp, it->second.transfer);
 	}
 	fclose(fp);
 	char strtmp[100];
@@ -509,34 +454,34 @@ void ICompany::GetPNL()
 	dl.WriteLog(strtmp);
 }
 
-void ICompany::GetAccount()
-{
-	char tmpbuf[100];
-	sprintf(tmpbuf, "%s%s.account.csv", OUT_ACCOUNT_PATH, fdate);
-	FILE *fp = F_OPEN(tmpbuf, "w", log_no, fdate);
-	fprintf(fp, "#tk,trade,rest_shr,tpx,happen_cash,commission,stamp_tax,transfer,clearing\n");
-	int size = tk_q.size();
-	int i = 0;
-	while (i < size)
-	{
-		fprintf(fp, "%s,%d,%d,%f,%f,%f,%f,%f,%f\n", tk_q[i], trade_shr[i], shr1_q[i], tpx_q[i], -tpx_q[i] * trade_shr[i] - commission[i] - stamptax[i], commission[i], stamptax[i], 0, 0);//由于金额要卖是拿钱的所以，加上负号
-		i++;
-	}
-	fclose(fp);
-	char strtmp[100];
-	sprintf(strtmp, "%s created successful! ", tmpbuf);
-	DataLog dl(0, log_no, fdate, 1);
-	dl.WriteLog(strtmp);
-}
+//void ICompany::GetAccount()
+//{
+//	char tmpbuf[100];
+//	sprintf(tmpbuf, "%s%s.account.csv", OUT_ACCOUNT_PATH, fdate);
+//	FILE *fp = F_OPEN(tmpbuf, "w", log_no, fdate);
+//	fprintf(fp, "#tk,trade,rest_shr,tpx,happen_cash,commission,stamp_tax,transfer,clearing\n");
+//	int size = tk_q.size();
+//	int i = 0;
+//	while (i < size)
+//	{
+//		fprintf(fp, "%s,%d,%d,%f,%f,%f,%f,%f,%f\n", tk_q[i], trade_shr[i], shr1_q[i], tpx_q[i], -tpx_q[i] * trade_shr[i] - commission[i] - stamptax[i], commission[i], stamptax[i], 0, 0);//由于金额要卖是拿钱的所以，加上负号
+//		i++;
+//	}
+//	fclose(fp);
+//	char strtmp[100];
+//	sprintf(strtmp, "%s created successful! ", tmpbuf);
+//	DataLog dl(0, log_no, fdate, 1);
+//	dl.WriteLog(strtmp);
+//}
 
 //从tradingsystem里面读取时间
 void ICompany::GetTimeRange()
 {
 	//打开TradingSystem
 	char tmpbuf[100];
-	sprintf(tmpbuf, "%s%s.TradingSystem.csv", TRADE_SYS_PATH, fdate);
+	sprintf(tmpbuf, "%s%s.TradingSystem.csv", TRADE_SYS_PATH, lastdate);
 	map <string, trade_tp>::iterator m_Iter;
-	FILE *fp = F_OPEN(tmpbuf, "r", log_no, fdate);
+	FILE *fp = F_OPEN(tmpbuf, "r", log_no, lastdate);
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	fgets(tmpbuf, 100, fp);
 	char strtime[8] = { 0 };
@@ -572,6 +517,8 @@ void ICompany::GetTimeRange()
 		m_Iter = tt_map.find(cur_tk);
 		if (m_Iter == tt_map.end())
 		{
+			memset(ttp->st,0,sizeof(ttp->st));
+			memset(ttp->et, 0, sizeof(ttp->et));
 			strncpy(ttp->st, strtime, 6);
 			strncpy(ttp->et, strtime, 6);
 			tt_map[cur_tk] = ttp;
@@ -617,15 +564,18 @@ void ICompany::GetTcost()
 {
 	vector<float> ipx0, aipx1, aipx2, amt, tcost1s, tcost1p, tcost2s, tcost2p;//市场起始价，市场平均价，市场加权平均价格，四个tcost算法
 	float avgipx0 = 0, avgaipx1 = 0, avgaipx2 = 0, total_amt = 0, t_tcost1s = 0, t_tcost1p = 0, t_tcost2s = 0, t_tcost2p = 0;//total行的值
-	int size = tk_q.size();
+	map<string, trade_sys> tkmp;
+	tkmp = FillTradeShr(lastdate);
+	int size = tkmp.size();
 	int i = 0;
 	GetTimeRange();//先获得时间范围.
 	char tmpbuf[5000];
-	sprintf(tmpbuf, "%s%s.ipx.csv", IPX_PATH, fdate);
-	FILE *fp = F_OPEN(tmpbuf, "r", log_no, fdate);
+	sprintf(tmpbuf, "%s%s.ipx.csv", IPX_PATH,lastdate);
+	FILE *fp = F_OPEN(tmpbuf, "r", log_no, lastdate);
 	fgets(tmpbuf, 5000, fp);//跳过表头
 	char tk[10];
-	while (i < size)
+	map<string, trade_sys>::iterator it;
+	for (it = tkmp.begin(); it!=tkmp.end();)
 	{
 		float avg = 0;
 		float avgw = 0;
@@ -640,7 +590,7 @@ void ICompany::GetTcost()
 		char tk1[10] = { 0 };
 		strncpy(tk1, tk, strlen(tk) - strlen(strchr(tk, '.')));//去掉.SZ这个后缀
 		//由于深A和沪A分别是升序排列但是之间会交错，ipx的错误
-		if (strcmp(tk1, tk_q[i]) != 0)
+		if (strcmp(tk1, it->first.c_str()) != 0)
 			continue;
 		else
 		{
@@ -661,11 +611,11 @@ void ICompany::GetTcost()
 			}
 			aipx1.push_back(avg / 120);
 			aipx2.push_back(avgw / vol);
-			amt.push_back(tpx_q[i] * (trade_shr[i] >= 0 ? trade_shr[i] : -1.0*trade_shr[i]));
-			tcost1s.push_back(trade_shr[i] * (tpx_q[i] - aipx1[i]));
-			tcost1p.push_back(tcost1s[i] / (tpx_q[i] * amt[i]));
-			tcost2s.push_back(trade_shr[i] * (tpx_q[i] - aipx2[i]));
-			tcost2p.push_back(tcost2s[i] / (tpx_q[i] * amt[i]));
+			amt.push_back(it->second.price * (it->second.shr >= 0 ? it->second.shr : -1.0*it->second.shr));
+			tcost1s.push_back(it->second.shr * (it->second.price - aipx1[i]));
+			tcost1p.push_back(tcost1s[i] / (it->second.price * amt[i]));
+			tcost2s.push_back(it->second.shr * (it->second.price - aipx2[i]));
+			tcost2p.push_back(tcost2s[i] / (it->second.price * amt[i]));
 			avgipx0 += ipx0[i];
 			avgaipx1 += aipx1[i];
 			avgaipx2 += aipx2[i];
@@ -675,27 +625,28 @@ void ICompany::GetTcost()
 			t_tcost2s += tcost2s[i];
 			t_tcost2p += tcost2p[i];
 			i++;
+			it++;
 		}
 	}
 	avgipx0 = avgipx0 / 120;
 	avgaipx1 = avgaipx1 / 120;
 	avgaipx2 = avgaipx2 / 120;
 	fclose(fp);
-	sprintf(tmpbuf, "%s%s.tcost.csv", OUT_TCOST_PATH, fdate);
-	fp = F_OPEN(tmpbuf,"w",log_no,fdate);
+	sprintf(tmpbuf, "%s%s.tcost.csv", OUT_TCOST_PATH, lastdate);
+	fp = F_OPEN(tmpbuf, "w", log_no, lastdate);
 	//fp = fopen(tmpbuf, "w");
 	fprintf(fp, "%s\n", "#tk,shr,ipx0,aipx1,aipx2,tpx,amt,tcost1s,tcost1p,tcost2s,tcost2p");
 	fprintf(fp, "#total,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", totaltrade, avgipx0, avgaipx1, avgaipx2, tpx_avg, total_amt, t_tcost1s, t_tcost1p, t_tcost2s, t_tcost2p);
-	i = 0;
-	while (i < size)
+	i = 0; 
+	for (it = tkmp.begin(); it != tkmp.end(); it++)
 	{
-		fprintf(fp, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", tk_q[i], trade_shr[i], ipx0[i], aipx1[i], aipx2[i], tpx_q[i], amt[i], tcost1s[i], tcost1p[i], tcost2s[i], tcost2p[i]);
+		fprintf(fp, "%s,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", it->first, it->second.shr, ipx0[i], aipx1[i], aipx2[i], it->second.price, amt[i], tcost1s[i], tcost1p[i], tcost2s[i], tcost2p[i]);
 		i++;
 	}
 	fclose(fp);
 	char strtmp[100];
-	sprintf(strtmp, "%s.tcost.csv created successful! ", fdate);
-	DataLog dl(0, log_no, fdate, 1);
+	sprintf(strtmp, "%s.tcost.csv created successful! ", lastdate);
+	DataLog dl(0, log_no, lastdate, 1);
 	dl.WriteLog(strtmp);
 }
 
@@ -743,13 +694,13 @@ map<string, int>  ICompany::FillPosV2(int type)
 * 从trade.csv中获取
 * 拿到当天tk及对应的shr
 */
-map<string, int>  ICompany::FillTradeShr()
+map<string, trade_sys>  ICompany::FillTradeShr(char *fdate)
 {
 	char logstr[100];
 	FILE *fp;
 	char strline[100];
 	char tmpbuf[100];
-	map<string, int> mp;
+	map<string, trade_sys> mp;
 	int *tshr;
 	memset(tmpbuf, 0, sizeof(tmpbuf));
 	sprintf(tmpbuf, "%s%s.trade.csv", OUT_TRADE_PATH, fdate);
@@ -766,7 +717,9 @@ map<string, int>  ICompany::FillTradeShr()
 		}
 		strcpy(tk_tmp, strtok(strline, ","));
 		char *shr = strtok(NULL, ",");
-		mp[tk_tmp] = atoi(shr);
+		mp[tk_tmp].shr = atoi(shr);
+		char *tpx = strtok(NULL, ",");
+		mp[tk_tmp].price = atoi(tpx);
 	}
 	fclose(fp);
 	return mp;
@@ -774,24 +727,24 @@ map<string, int>  ICompany::FillTradeShr()
 
 void ICompany::CheckPos()
 {
-	map<string, int> trdshr = FillTradeShr();
+	map<string, trade_sys> trdshr = FillTradeShr(fdate);
 	map<string, int> pos1 = FillPosV2(0);
 	map<string, int> pos2 = FillPosV2(1);
 	map<string, int> posnew;
 	char logstr[200];
 	int i = 0;
-	map<string, int>::iterator it;
+	map<string, trade_sys>::iterator it;
 	/*得带了trade文件与pos文件的并集并且去掉0持仓的项*/
 	for (it = trdshr.begin(); it != trdshr.end(); it++)
 	{
-		if (pos1[it->first] + it->second == 0)
+		if (pos1[it->first] + it->second.shr  == 0)
 		{
 			map<string, int>::iterator itmp = pos1.find(it->first);
 			pos1.erase(itmp);
 		}
 		else
 		{
-			pos1[it->first] += it->second;
+			pos1[it->first] += it->second.shr;
 
 		}
 	}
@@ -810,9 +763,10 @@ void ICompany::CheckPos()
 		dl.WriteLog("The stock number of (pos-1+trade0) and pos0 is the same.");
 	}
 	int ret = 0;
-	for (it = pos1.begin(); it != pos1.end(); it++)
+	map<string, int>::iterator pit;
+	for (pit = pos1.begin(); pit != pos1.end(); pit++)
 	{
-		if (pos2[it->first] != it->second)
+		if (pos2[pit->first] != pit->second)
 		{
 			DataLog dl(1, log_no, fdate, 2);
 			memset(logstr, 0, strlen(logstr));

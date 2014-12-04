@@ -9,15 +9,9 @@ using namespace std;
 class ICompany
 {
 private:
-	vector<char*> tk_q;//ticker
-	vector<float> tpx_q;//today trade price
-	vector<int> trade_shr;//today
-	vector<float> commission;
-	vector<float> stamptax;
-	vector<float> transfer;
+	
 	map<string, trade_tp> tt_map;//记录交易股票的起始时间
-	vector<float> dpx0_q, dpx1_q;
-	vector<int> shr0_q, shr1_q;
+
 	float total_com = 0;
 	float total_stamptax = 0;
 	float total_transfer = 0;
@@ -27,11 +21,11 @@ private:
 	float totaltrans = 0;
 	float tpx_avg = 0;
 
-	void FillTrade();
-	void FillDpx(int type, vector<float> &dpx_q, float *totaldpx);
-	void FillPos(int type, vector<int> &ve, int *totalshr);
+	void FillTrade(map<string, pnlst> *pnlmp);
+	void FillDpx(int type, map<string, pnlst> *pnlmp, float *totaldpx);
+	void FillPos(int type, map<string, pnlst> *pnlmp, int *totalshr);
 	map<string, int> FillPosV2(vector<int> &ve, int type);
-	map<string, int> FillTradeShr();
+	map<string, trade_sys> FillTradeShr(char *);
 public:
 	ICompany();
 	~ICompany();
@@ -71,13 +65,13 @@ public:
 	virtual void GetTcost();
 	virtual void GetLastDate();
 	virtual void GetDate(char *);
-	virtual void GetAccount();
+	//virtual void GetAccount();
 	char* LocateColomn(int index);
 	int Time2Index(char *strtime);
-	int CheckVector();
+	//int CheckVector();
 
 	void GetTimeRange();
-	void Clearvector();
+
 	void CheckPos();
 	map<string, int> FillPosV2(int);
 

@@ -13,6 +13,7 @@
 /*Check weekend and time */
 int CheckTime()
 {
+	return 2;
 	time_t rawtime;
 	struct tm * timeinfo;
 	time(&rawtime);
@@ -34,29 +35,27 @@ int CheckTime()
 void Run(ICompany *comp)
 {
 	int type = CheckTime() ;
+	comp->GetDate(comp->fdate);
 	if (type==1)
 	{
 		printf("Start run ...\n");
 		while (strcmp(comp->fdate, "xxxx") != 0)
 		{
-			comp->GetDate(comp->fdate);
-			comp->GetLastDate();
+
 			comp->GetTrade();
 			comp->GetPos();
 			comp->CheckPos();
 			comp->GetPNL();
 			comp->GetLastDate();
 			strcpy(comp->fdate, comp->lastdate);
-			comp->Clearvector();
 			break;
 		}
 	}
 	else if (type == 2)
 	{
-		comp->GetDate(comp->fdate);
 		comp->GetLastDate();
-		comp->GetAccount();
-		comp->GetTcost();
+		//comp->GetAccount();
+ 		comp->GetTcost();
 	}
 	else
 	{
